@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Powerbuilding Pro - Banca y Rutina</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: #1e293b;
+      --card-alt: #334155;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --accent: #3b82f6;
+      --accent-hover: #2563eb;
+      --green: #10b981;
+      --amber: #f59e0b;
+      --red: #ef4444;
+      --border: #334155;
+    }
+    html, body, div, span, button, input, select, p, label {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      min-height: 100%;
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      overflow-x: hidden;
+      overflow-y: auto !important;
+      -webkit-overflow-scrolling: touch;
+      padding-bottom: 60px;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 16px;
+    }
+    .main-nav {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      background: var(--card);
+      padding: 6px;
+      border-radius: 12px;
+      margin-bottom: 16px;
+      border: 1px solid var(--border);
+      position: sticky;
+      top: 10px;
+      z-index: 50;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+    }
+    .nav-btn {
+      background: transparent;
+      color: var(--muted);
+      border: none;
+      padding: 12px 8px;
+      font-size: 14px;
+      font-weight: 700;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .nav-btn.active {
+      background: var(--accent);
+      color: #fff;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+    .card-title {
+      font-size: 16px;
+      font-weight: 700;
+      margin: 0 0 12px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+    .split-toggle {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+    .toggle-btn {
+      background: var(--bg);
+      color: var(--muted);
+      border: 1px solid var(--border);
+      padding: 10px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .toggle-btn.active {
+      background: rgba(59, 130, 246, 0.18);
+      color: #60a5fa;
+      border-color: var(--accent);
+    }
+    .rm-control {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .step-btn {
+      background: var(--card-alt);
+      color: #fff;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 14px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .step-btn:active { transform: scale(0.96); }
+    .rm-display {
+      text-align: center;
+      flex: 1;
+    }
+    .rm-value {
+      font-size: 28px;
+      font-weight: 800;
+      color: #60a5fa;
+    }
+    .rm-sub {
+      font-size: 12px;
+      color: var(--muted);
+    }
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--accent);
+      height: 6px;
+      margin: 8px 0;
+    }
+    .week-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+      margin-bottom: 16px;
+    }
+    .week-btn {
+      background: var(--card);
+      color: var(--muted);
+      border: 1px solid var(--border);
+      padding: 10px 4px;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      text-align: center;
+    }
+    .week-btn.active {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+    .set-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 14px;
+    }
+    .set-row:last-child { border-bottom: none; }
+    .weight-badge {
+      background: rgba(59, 130, 246, 0.2);
+      color: #93c5fd;
+      padding: 4px 10px;
+      border-radius: 8px;
+      font-weight: 800;
+      font-size: 15px;
+    }
+    .rir-badge {
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-weight: 700;
+    }
+    .rir-red { background: rgba(239,68,68,0.2); color: #fca5a5; }
+    .rir-amber { background: rgba(245,158,11,0.2); color: #fcd34d; }
+    .rir-green { background: rgba(16,185,129,0.2); color: #6ee7b7; }
+    .warmup-box {
+      background: var(--bg);
+      padding: 10px 12px;
+      border-radius: 10px;
+      margin-bottom: 12px;
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+    .days-scroll {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 5px;
+      margin-bottom: 16px;
+    }
+    .day-pill {
+      background: var(--card);
+      color: var(--muted);
+      border: 1px solid var(--border);
+      padding: 10px 2px;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 700;
+      text-align: center;
+      cursor: pointer;
+    }
+    .day-pill.active {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+    .ex-card {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 10px;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+    }
+    .ex-card.done {
+      opacity: 0.5;
+      border-color: var(--green);
+    }
+    .ex-check {
+      width: 24px;
+      height: 24px;
+      margin-top: 2px;
+      accent-color: var(--green);
+      flex-shrink: 0;
+    }
+    .ex-info { flex: 1; }
+    .ex-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+    .ex-name {
+      font-weight: 700;
+      font-size: 15px;
+      line-height: 1.3;
+    }
+    .series-box {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 2px 4px;
+      flex-shrink: 0;
+    }
+    .s-btn {
+      background: var(--card-alt);
+      color: #fff;
+      border: none;
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 800;
+      cursor: pointer;
+      line-height: 1;
+    }
+    .s-count {
+      font-size: 12px;
+      font-weight: 800;
+      color: #93c5fd;
+      padding: 0 5px;
+      white-space: nowrap;
+    }
+    .ex-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 6px;
+    }
+    .meta-tag {
+      background: var(--card);
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #cbd5e1;
+    }
+    .ex-note {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+    select {
+      width: 100%;
+      background: var(--bg);
+      color: #fff;
+      border: 1px solid var(--border);
+      padding: 10px;
+      border-radius: 8px;
+      font-size: 14px;
+      margin-bottom: 12px;
+    }
+    .action-btn {
+      width: 100%;
+      background: var(--green);
+      color: #064e3b;
+      border: none;
+      padding: 14px;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 800;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    .verdict-box {
+      padding: 12px;
+      border-radius: 10px;
+      margin-top: 8px;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    .vol-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      font-size: 13px;
+    }
+    .vol-item {
+      background: var(--bg);
+      padding: 8px 10px;
+      border-radius: 8px;
+      display: flex;
+      justify-content: space-between;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <!-- PESTAÑAS PRINCIPALES -->
+  <div class="main-nav">
+    <button class="nav-btn active" id="tabBtnBanca" onclick="switchTab('banca')">🏋️‍♂️ Progresión Banca</button>
+    <button class="nav-btn" id="tabBtnRutina" onclick="switchTab('rutina')">📋 Rutina Semanal</button>
+  </div>
+
+  <!-- SELECTOR DE MODO (COMPARTIDO) -->
+  <div class="split-toggle">
+    <button class="toggle-btn active" id="mode5Btn" onclick="setMode('5d')">5 Días (Frecuencia 3)</button>
+    <button class="toggle-btn" id="mode4Btn" onclick="setMode('4d')">4 Días (Frecuencia 2)</button>
+  </div>
+
+  <!-- VISTA 1: PROGRESIÓN DE BANCA -->
+  <div id="viewBanca">
+    <div class="card">
+      <div class="card-title">
+        <span>1RM de Trabajo</span>
+        <span class="rir-badge rir-green" id="blockBadge">Bloque #1</span>
+      </div>
+      <div class="rm-control">
+        <button class="step-btn" onclick="changeRM(-2.5)">-2,5 kg</button>
+        <div class="rm-display">
+          <div class="rm-value" id="rmValueText">110 kg</div>
+          <div class="rm-sub">Redondeo exacto a 2,5 kg</div>
+        </div>
+        <button class="step-btn" onclick="changeRM(2.5)">+2,5 kg</button>
+      </div>
+      <input type="range" id="rmSlider" min="60" max="180" step="2.5" value="110" oninput="onSliderRM(this.value)">
+    </div>
+
+    <div class="week-grid">
+      <button class="week-btn active" id="wk1" onclick="setWeek(1)">Semana 1<br><small>Base</small></button>
+      <button class="week-btn" id="wk2" onclick="setWeek(2)">Semana 2<br><small>Acumul.</small></button>
+      <button class="week-btn" id="wk3" onclick="setWeek(3)">Semana 3<br><small>Examen</small></button>
+      <button class="week-btn" id="wk4" onclick="setWeek(4)">Semana 4<br><small>Descarga</small></button>
+    </div>
+
+    <div id="benchDaysContainer"></div>
+
+    <!-- EVALUADOR DE FIN DE BLOQUE -->
+    <div class="card" style="border-color: var(--accent);">
+      <div class="card-title">
+        <span>🎯 Evaluador Fin de Bloque (Sem 3)</span>
+      </div>
+      <p style="font-size:12px; color:var(--muted); margin-top:0;">
+        Completa este test tras el <b>Sábado de la Semana 3</b> para saber cuánto subir el RM en el siguiente bloque:
+      </p>
+      <label style="font-size:12px; font-weight:700; display:block; margin-bottom:4px;" id="evalSingleLabel">1. ¿Cómo subió la Top Single de Semana 3?</label>
+      <select id="evalSingle" onchange="renderBench()">
+        <option value="rapida">Voló (RPE 7.5-8) — Entraban 2 o 3 más</option>
+        <option value="solida" selected>Sólida y limpia (RPE 8.5) — 1 a 1.5 en recámara</option>
+        <option value="luchada">Lenta / Luchada (RPE 9.5-10) — Casi se para</option>
+        <option value="fallo">Fallo o molestia en hombro/pectoral</option>
+      </select>
+
+      <label style="font-size:12px; font-weight:700; display:block; margin-bottom:4px;" id="evalBackoffLabel">2. Reps logradas a RIR 1 en la 3.ª serie Back-off:</label>
+      <select id="evalBackoff" onchange="renderBench()">
+        <option value="3">3 repeticiones (justo)</option>
+        <option value="4">4 repeticiones (cumplido exacto)</option>
+        <option value="5" selected>5 repeticiones (fuerte)</option>
+        <option value="6">6 o más repeticiones (sobrado)</option>
+      </select>
+
+      <div id="evalVerdictBox" class="verdict-box"></div>
+      <button class="action-btn" onclick="applyNextBlock()">Aplicar Ajuste y Empezar Nuevo Bloque</button>
+    </div>
+  </div>
+
+  <!-- VISTA 2: RUTINA SEMANAL COMPLETA -->
+  <div id="viewRutina" style="display:none;">
+    <div class="days-scroll" id="dayPillsContainer"></div>
+
+    <div class="card">
+      <div class="card-title">
+        <span id="routineDayTitle">Sábado</span>
+        <div style="display:flex; gap:6px;">
+          <button onclick="resetDayChecks()" style="background:transparent; border:1px solid var(--border); color:var(--muted); border-radius:6px; padding:4px 8px; font-size:11px; cursor:pointer;">Desmarcar</button>
+          <button onclick="resetCustomSets()" style="background:transparent; border:1px solid var(--border); color:var(--muted); border-radius:6px; padding:4px 8px; font-size:11px; cursor:pointer;">Series base</button>
+        </div>
+      </div>
+      <div id="routineExercisesContainer"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span>📊 Series Semanales Totales</span></div>
+      <div class="vol-grid" id="volGridContainer"></div>
+      <p style="font-size:12px; color:var(--muted); margin:12px 0 0 0; line-height:1.4;">
+        💡 <b>Doble Progresión en Lyfta:</b> Mantén el mismo peso hasta lograr el tope de repeticiones en todas las series. La semana siguiente sube 2 - 2,5 kg y vuelve al mínimo del rango.
+      </p>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Funciones de memoria seguras para que nunca falle en vistas previas ni en Safari
+  function safeGet(key, fallback) {
+    try {
+      var val = window.localStorage.getItem(key);
+      return val !== null ? val : fallback;
+    } catch (e) {
+      return fallback;
+    }
+  }
+
+  function safeGetJSON(key, fallback) {
+    try {
+      var val = window.localStorage.getItem(key);
+      return val ? JSON.parse(val) : fallback;
+    } catch (e) {
+      return fallback;
+    }
+  }
+
+  function safeSet(key, val) {
+    try {
+      window.localStorage.setItem(key, val);
+    } catch (e) {}
+  }
+
+  var daysOrder = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+
+  var state = {
+    tab: 'banca',
+    mode: safeGet('pb_mode', '5d'),
+    oneRM: parseFloat(safeGet('pb_rm', '110')) || 110,
+    week: parseInt(safeGet('pb_week', '1'), 10) || 1,
+    block: parseInt(safeGet('pb_block', '1'), 10) || 1,
+    day: safeGet('pb_day', 'Sáb'),
+    checks: safeGetJSON('pb_checks', {}),
+    setsMap: safeGetJSON('pb_sets_map', {})
+  };
+
+  if (daysOrder.indexOf(state.day) === -1) {
+    state.day = 'Sáb';
+  }
+
+  function saveState() {
+    safeSet('pb_mode', state.mode);
+    safeSet('pb_rm', String(state.oneRM));
+    safeSet('pb_week', String(state.week));
+    safeSet('pb_block', String(state.block));
+    safeSet('pb_day', state.day);
+    safeSet('pb_checks', JSON.stringify(state.checks));
+    safeSet('pb_sets_map', JSON.stringify(state.setsMap));
+  }
+
+  function r25(val) {
+    return Math.round(val / 2.5) * 2.5;
+  }
+
+  function switchTab(t) {
+    state.tab = t;
+    document.getElementById('tabBtnBanca').classList.toggle('active', t === 'banca');
+    document.getElementById('tabBtnRutina').classList.toggle('active', t === 'rutina');
+    document.getElementById('viewBanca').style.display = t === 'banca' ? 'block' : 'none';
+    document.getElementById('viewRutina').style.display = t === 'rutina' ? 'block' : 'none';
+    renderAll();
+  }
+
+  function setMode(m) {
+    state.mode = m;
+    saveState();
+    renderAll();
+  }
+
+  function changeRM(delta) {
+    state.oneRM = Math.min(180, Math.max(60, state.oneRM + delta));
+    document.getElementById('rmSlider').value = state.oneRM;
+    saveState();
+    renderBench();
+  }
+
+  function onSliderRM(val) {
+    state.oneRM = parseFloat(val);
+    saveState();
+    renderBench();
+  }
+
+  function setWeek(w) {
+    state.week = w;
+    saveState();
+    renderBench();
+  }
+
+  function renderBench() {
+    document.getElementById('rmValueText').textContent = state.oneRM + ' kg';
+    document.getElementById('rmSlider').value = state.oneRM;
+    document.getElementById('blockBadge').textContent = 'Bloque #' + state.block;
+    for (var i = 1; i <= 4; i++) {
+      document.getElementById('wk' + i).classList.toggle('active', state.week === i);
+    }
+
+    var rm = state.oneRM;
+    var w = state.week;
+    var satSets = [], tueSets = [], thuSets = [];
+
+    if (w === 1) {
+      satSets = [
+        { name: 'Top Single', reps: '1 x 1', pct: 88.5, rir: 'RPE 8', cls: 'rir-red' },
+        { name: 'Back-offs', reps: '3 x 5', pct: 80, rir: 'RIR 2', cls: 'rir-amber' }
+      ];
+      tueSets = state.mode === '5d' ? [
+        { name: 'Serie 1 (Hipertrofia)', reps: '1 x 9-10', pct: 75, rir: 'RIR 1-2', cls: 'rir-amber' },
+        { name: 'Serie 2', reps: '1 x 8-9', pct: 72.5, rir: 'RIR 1-2', cls: 'rir-amber' },
+        { name: 'Serie 3', reps: '1 x 8-10', pct: 70, rir: 'RIR 1', cls: 'rir-red' }
+      ] : [
+        { name: 'Series 1 y 2 (Pausa 1s)', reps: '2 x 6-7', pct: 77.5, rir: 'RIR 2', cls: 'rir-amber' },
+        { name: 'Series 3 y 4 (Pausa 1s)', reps: '2 x 7-8', pct: 75, rir: 'RIR 1-2', cls: 'rir-amber' }
+      ];
+      thuSets = [{ name: 'Pausa 2 seg (Velocidad)', reps: '4 x 4', pct: 70, rir: 'RPE 7', cls: 'rir-green' }];
+    } else if (w === 2) {
+      satSets = [
+        { name: 'Top Single', reps: '1 x 1', pct: 91, rir: 'RPE 8.5', cls: 'rir-red' },
+        { name: 'Back-offs', reps: '3 x 5', pct: 82, rir: 'RIR 2', cls: 'rir-amber' }
+      ];
+      tueSets = state.mode === '5d' ? [
+        { name: 'Series 1 y 2', reps: '2 x 8-10', pct: 75, rir: 'RIR 1-2', cls: 'rir-amber' },
+        { name: 'Serie 3', reps: '1 x 8-10', pct: 72.5, rir: 'RIR 1', cls: 'rir-red' }
+      ] : [
+        { name: 'Series 1 a 3 (Pausa 1s)', reps: '3 x 6-8', pct: 77.5, rir: 'RIR 1-2', cls: 'rir-amber' },
+        { name: 'Serie 4 (Pausa 1s)', reps: '1 x 7-8', pct: 75, rir: 'RIR 1', cls: 'rir-red' }
+      ];
+      thuSets = [{ name: 'Pausa 2 seg (Velocidad)', reps: '4 x 5', pct: 70, rir: 'RPE 7', cls: 'rir-green' }];
+    } else if (w === 3) {
+      satSets = [
+        { name: 'Top Single (Día Pico)', reps: '1 x 1', pct: 93, rir: 'RPE 8.5-9', cls: 'rir-red' },
+        { name: 'Back-offs (3.ª serie = Test)', reps: '3 x 4', pct: 84, rir: 'RIR 1-2', cls: 'rir-red' }
+      ];
+      tueSets = state.mode === '5d' ? [
+        { name: 'Series 1 a 3', reps: '3 x 8-9', pct: 75, rir: 'RIR 1', cls: 'rir-red' }
+      ] : [
+        { name: 'Series 1 a 4 (Pausa 1s)', reps: '4 x 6', pct: 79, rir: 'RIR 1', cls: 'rir-red' }
+      ];
+      thuSets = [{ name: 'Pausa 2 seg (Velocidad)', reps: '4 x 4', pct: 72.5, rir: 'RPE 7.5', cls: 'rir-green' }];
+    } else {
+      satSets = [
+        { name: 'Descarga Activa (Sin Single)', reps: '3 x 5', pct: 75, rir: 'RIR 3-4', cls: 'rir-green' }
+      ];
+      tueSets = state.mode === '5d' ? [
+        { name: 'Descarga Hipertrofia', reps: '2 x 8', pct: 68, rir: 'RIR 3', cls: 'rir-green' }
+      ] : [
+        { name: 'Descarga Pausa 1s', reps: '3 x 6', pct: 70, rir: 'RIR 3', cls: 'rir-green' }
+      ];
+      thuSets = [{ name: 'Descarga Técnica Pausa 2s', reps: '3 x 4', pct: 66, rir: 'RPE 6', cls: 'rir-green' }];
+    }
+
+    var warmups = [
+      'Barra (20 kg) x 15',
+      r25(rm * 0.45) + ' kg x 8',
+      r25(rm * 0.65) + ' kg x 5',
+      r25(rm * 0.75) + ' kg x 3',
+      r25(rm * 0.82) + ' kg x 1'
+    ];
+    if (w === 2 || w === 3) warmups.push(r25(rm * 0.86) + ' kg x 1');
+
+    var html = '<div class="card">' +
+      '<div class="card-title"><span>⭐ Sábado: Bench Press (Pesada)</span></div>' +
+      (w < 4 ? '<div class="warmup-box">🔥 <b>Aproximaciones:</b> ' + warmups.join(' → ') + '</div>' : '') +
+      satSets.map(function(s) {
+        return '<div class="set-row">' +
+          '<div><b>' + s.name + '</b><br><small style="color:var(--muted)">' + s.reps + ' (' + s.pct + '%)</small></div>' +
+          '<div style="display:flex; align-items:center; gap:8px;">' +
+            '<span class="rir-badge ' + s.cls + '">' + s.rir + '</span>' +
+            '<span class="weight-badge">' + r25(rm * s.pct / 100) + ' kg</span>' +
+          '</div>' +
+        '</div>';
+      }).join('') +
+    '</div>' +
+    '<div class="card">' +
+      '<div class="card-title"><span>💪 Martes: Bench Press (Hipertrofia)</span></div>' +
+      tueSets.map(function(s) {
+        return '<div class="set-row">' +
+          '<div><b>' + s.name + '</b><br><small style="color:var(--muted)">' + s.reps + ' (' + s.pct + '%)</small></div>' +
+          '<div style="display:flex; align-items:center; gap:8px;">' +
+            '<span class="rir-badge ' + s.cls + '">' + s.rir + '</span>' +
+            '<span class="weight-badge">' + r25(rm * s.pct / 100) + ' kg</span>' +
+          '</div>' +
+        '</div>';
+      }).join('') +
+    '</div>';
+
+    if (state.mode === '5d') {
+      html += '<div class="card">' +
+        '<div class="card-title"><span>⚡ Jueves: Bench Press (Pausa 2s)</span></div>' +
+        thuSets.map(function(s) {
+          return '<div class="set-row">' +
+            '<div><b>' + s.name + '</b><br><small style="color:var(--muted)">' + s.reps + ' (' + s.pct + '%)</small></div>' +
+            '<div style="display:flex; align-items:center; gap:8px;">' +
+              '<span class="rir-badge ' + s.cls + '">' + s.rir + '</span>' +
+              '<span class="weight-badge">' + r25(rm * s.pct / 100) + ' kg</span>' +
+            '</div>' +
+          '</div>';
+        }).join('') +
+      '</div>';
+    }
+
+    document.getElementById('benchDaysContainer').innerHTML = html;
+
+    // Evaluador Semana 3
+    var w3Single = r25(rm * 0.93);
+    var w3Backoff = r25(rm * 0.84);
+    document.getElementById('evalSingleLabel').textContent = '1. ¿Cómo subió la Single de Sem 3 (' + w3Single + ' kg)?';
+    document.getElementById('evalBackoffLabel').textContent = '2. Reps a RIR 1 en la 3.ª serie con ' + w3Backoff + ' kg:';
+
+    var feeling = document.getElementById('evalSingle').value;
+    var reps = parseInt(document.getElementById('evalBackoff').value, 10);
+    var estRM = Math.round((w3Backoff * (1 + (reps + 1) / 30)) * 2) / 2;
+
+    var delta = 0, msg = '', bg = '';
+    if (feeling === 'fallo' || reps === 3) {
+      delta = -2.5;
+      bg = 'background:rgba(239,68,68,0.15); border:1px solid var(--red); color:#fca5a5;';
+      msg = '⚠️ <b>Bajar -2,5 kg (Nuevo RM: ' + (rm - 2.5) + ' kg)</b><br>1RM estimado: ~' + estRM + ' kg. Hay fatiga acumulada; recalibra para coger impulso.';
+    } else if (feeling === 'luchada' || (feeling === 'solida' && reps === 4)) {
+      delta = 0;
+      bg = 'background:rgba(245,158,11,0.15); border:1px solid var(--amber); color:#fcd34d;';
+      msg = '🛡️ <b>Mantener RM en ' + rm + ' kg (+0 kg)</b><br>1RM estimado: ~' + estRM + ' kg. Repite pesos un bloque más buscando moverlos más rápido.';
+    } else if (feeling === 'rapida' && reps >= 6) {
+      delta = 5;
+      bg = 'background:rgba(16,185,129,0.15); border:1px solid var(--green); color:#6ee7b7;';
+      msg = '🚀 <b>Subir +5 kg (Nuevo RM: ' + (rm + 5) + ' kg)</b><br>1RM estimado: ~' + estRM + ' kg. Supercompensación clara, sube 2 saltos.';
+    } else {
+      delta = 2.5;
+      bg = 'background:rgba(16,185,129,0.15); border:1px solid var(--green); color:#6ee7b7;';
+      msg = '✅ <b>Subir +2,5 kg (Nuevo RM: ' + (rm + 2.5) + ' kg)</b><br>1RM estimado: ~' + estRM + ' kg. Progreso estándar completado con éxito.';
+    }
+    state.pendingDelta = delta;
+    var vBox = document.getElementById('evalVerdictBox');
+    vBox.setAttribute('style', bg);
+    vBox.innerHTML = msg;
+  }
+
+  function applyNextBlock() {
+    state.oneRM = Math.min(180, Math.max(60, state.oneRM + (state.pendingDelta || 0)));
+    state.block += 1;
+    state.week = 1;
+    saveState();
+    renderBench();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // RUTINAS ACTUALIZADAS CON LOS EJERCICIOS DE TUS CAPTURAS DE LYFTA
+  var routineData = {
+    '5d': {
+      days: {
+        'Lun': { title: 'Lunes — Descanso Total', ex: [] },
+        'Mar': { title: 'Martes — Banca Hipertrofia + Empuje (RIR 0-2)', ex: [
+          { n: 'Bench Press', m: 'Pecho', sets: 3, reps: '8-10 reps', rir: 'RIR 1-2 (70-75%)', rest: '2.5 - 3 min', note: 'Bajada controlada tocando suave el pecho sin rebotar.' },
+          { n: 'Lever Seated Shoulder Press', m: 'Hombro', sets: 3, reps: '6-9 reps', rir: 'RIR 1-2', rest: '2 min', note: 'Recorrido completo controlando la bajada.' },
+          { n: 'Dumbbell Incline Bench Press', m: 'Pecho', sets: 3, reps: '7-10 reps', rir: 'RIR 1-2', rest: '2 min', note: 'Banco a 30 grados, máximo estiramiento abajo.' },
+          { n: 'Cable Standing One Arm Tricep Pushdown', m: 'Tríceps', sets: 3, reps: '5-8 reps', rir: 'RIR 1', rest: '90 seg', note: 'Codo fijo al costado, bloqueo completo abajo.' },
+          { n: 'Lateral Raise', m: 'Hombro', sets: 4, reps: '7-13 reps', rir: 'RIR 0-1', rest: '60-90 seg', note: 'Plano escapular, guiando con los codos.' }
+        ]},
+        'Mié': { title: 'Miércoles — Tirón Principal (RIR 0-1)', ex: [
+          { n: 'Pulldown', m: 'Espalda', sets: 4, reps: '7-10 reps', rir: 'RIR 0-1', rest: '2 min', note: 'Pecho alto hacia la barra deprimiendo escápulas.' },
+          { n: 'Lever Lying T-bar Row', m: 'Espalda', sets: 4, reps: '8 reps', rir: 'RIR 0-1', rest: '2 min', note: 'Pecho apoyado, máxima densidad de espalda.' },
+          { n: 'Straight Back Seated Row', m: 'Espalda', sets: 3, reps: '8-10 reps', rir: 'RIR 0-1', rest: '90-120 seg', note: 'Espalda recta, pausa de 1 seg en contracción.' },
+          { n: 'EZ-bar Biceps Curl', m: 'Bíceps', sets: 3, reps: '7-8 reps', rir: 'RIR 0-1', rest: '90 seg', note: 'Codos pegados al costado sin balanceo lumbar.' }
+        ]},
+        'Jue': { title: 'Jueves — Torso Ligero (Pausa 2s, Torso RIR 2)', ex: [
+          { n: 'Bench Press (Pausa 2s)', m: 'Pecho', sets: 4, reps: '4-5 reps', rir: 'RPE 7 (70-72.5%)', rest: '2.5 min', note: 'PROHIBIDO IR AL FALLO. Pausa estricta de 2s y sube explosivo.' },
+          { n: 'Lever Narrow Grip Seated Row', m: 'Espalda', sets: 3, reps: '12 reps', rir: 'RIR 2', rest: '90 seg', note: 'Control técnico guardando 2 reps en recámara.' },
+          { n: 'Pulldown', m: 'Espalda', sets: 3, reps: '7-10 reps', rir: 'RIR 2', rest: '90 seg', note: 'Bombeo limpio sin fatigar para el sábado.' },
+          { n: 'Triceps Pushdown', m: 'Tríceps', sets: 2, reps: '8-10 reps', rir: 'RIR 2', rest: '75 seg', note: 'Guárdate 2 reps en tríceps para llegar fresco al sábado.' },
+          { n: 'Hammer Curl', m: 'Bíceps', sets: 2, reps: '6-10 reps', rir: 'RIR 2', rest: '75 seg', note: 'Trabajo de braquial y antebrazo sin llegar al fallo.' },
+          { n: 'Cable One Arm Lateral Raise', m: 'Hombro', sets: 3, reps: '10 reps', rir: 'RIR 2', rest: '60-90 seg', note: 'Tensión constante desde abajo en polea.' }
+        ]},
+        'Vie': { title: 'Viernes — Descanso Pre-Récord', ex: [] },
+        'Sáb': { title: '⭐ Sábado — Banca Pesada + Empuje (RIR 1-2)', ex: [
+          { n: 'Bench Press (1 Top Single + 3 Back-offs)', m: 'Pecho', sets: 4, reps: '1x1 + 3x4-5', rir: 'RPE 8-8.5 / RIR 2', rest: '3 - 4 min', note: 'Serie 1: Top Single pesada. Series 2 a 4: Back-offs.' },
+          { n: 'Dumbbell Incline Bench Press', m: 'Pecho', sets: 3, reps: '7-10 reps', rir: 'RIR 1-2', rest: '2 min', note: 'Banco a 30 grados. Recorrido profundo.' },
+          { n: 'Cable Standing One Arm Tricep Pushdown', m: 'Tríceps', sets: 3, reps: '5-8 reps', rir: 'RIR 1', rest: '90 seg', note: 'Fuerza de bloqueo unilateral para la banca.' },
+          { n: 'Cable One Arm Lateral Raise', m: 'Hombro', sets: 3, reps: '10 reps', rir: 'RIR 1', rest: '60-90 seg', note: 'Control en la bajada.' }
+        ]},
+        'Dom': { title: '⭐ Domingo — Pierna Completa (RIR 0-1)', ex: [
+          { n: 'Sled Hack Squat', m: 'Pierna', sets: 2, reps: '6-10 reps', rir: 'RIR 0-1', rest: '3 min', note: 'Profundidad completa sin despegar talón ni espalda.' },
+          { n: 'Sled 45° Leg Press', m: 'Pierna', sets: 2, reps: '8-9 reps', rir: 'RIR 0-1', rest: '2.5 min', note: 'Pies medios/bajos sin despegar el lumbar.' },
+          { n: 'Lever Seated Leg Curl', m: 'Pierna', sets: 2, reps: '6-9 reps', rir: 'RIR 0-1', rest: '90 seg', note: 'Pausa de 1 seg en máxima contracción.' },
+          { n: 'Lever Leg Extension', m: 'Pierna', sets: 2, reps: '8 reps', rir: 'RIR 0-1', rest: '90 seg', note: 'Pausa de 1 seg arriba del todo.' },
+          { n: 'Lever Seated Squat Calf Raise on Leg Press', m: 'Gemelo', sets: 2, reps: '10 reps', rir: 'RIR 0-1', rest: '60-90 seg', note: 'Pausa de 2 seg abajo para quitar el rebote.' }
+        ]}
+      }
+    },
+    '4d': {
+      days: {
+        'Lun': { title: 'Lunes — Descanso Total', ex: [] },
+        'Mar': { title: 'Martes — Banca 2 (Pausa 1s) + Torso', ex: [
+          { n: 'Bench Press (Pausa 1s)', m: 'Pecho', sets: 4, reps: '6-8 reps', rir: 'RIR 1-2 (75-78%)', rest: '2.5 - 3 min', note: 'Pausa de 1 seg en el pecho en todas las reps.' },
+          { n: 'Lever Lying T-bar Row', m: 'Espalda', sets: 4, reps: '8 reps', rir: 'RIR 1', rest: '2 min', note: 'Densidad de espalda alta con pecho apoyado.' },
+          { n: 'Lever Seated Shoulder Press', m: 'Hombro', sets: 3, reps: '6-9 reps', rir: 'RIR 1-2', rest: '2 min', note: 'Recorrido completo controlado.' },
+          { n: 'Pulldown', m: 'Espalda', sets: 3, reps: '7-10 reps', rir: 'RIR 1', rest: '90-120 seg', note: 'Estira bien los dorsales arriba.' },
+          { n: 'Cable Standing One Arm Tricep Pushdown', m: 'Tríceps', sets: 3, reps: '5-8 reps', rir: 'RIR 1', rest: '90 seg', note: 'Tríceps unilateral en polea.' },
+          { n: 'Lateral Raise', m: 'Hombro', sets: 3, reps: '7-13 reps', rir: 'RIR 0-1', rest: '60-90 seg', note: 'Elevaciones laterales con mancuernas.' }
+        ]},
+        'Mié': { title: 'Miércoles — Descanso Total', ex: [] },
+        'Jue': { title: 'Jueves — Tirón Principal + Hombro y Bíceps', ex: [
+          { n: 'Pulldown', m: 'Espalda', sets: 4, reps: '7-10 reps', rir: 'RIR 0-1', rest: '2 min', note: 'Tracción vertical principal.' },
+          { n: 'Straight Back Seated Row', m: 'Espalda', sets: 3, reps: '8-10 reps', rir: 'RIR 0-1', rest: '2 min', note: 'Tira hacia el abdomen con espalda recta.' },
+          { n: 'Lever Narrow Grip Seated Row', m: 'Espalda', sets: 3, reps: '12 reps', rir: 'RIR 1', rest: '90 seg', note: 'Remo agarre estrecho controlado.' },
+          { n: 'EZ-bar Biceps Curl', m: 'Bíceps', sets: 3, reps: '7-8 reps', rir: 'RIR 0-1', rest: '90 seg', note: 'Fuerza base de bíceps en barra Z.' },
+          { n: 'Hammer Curl', m: 'Bíceps', sets: 2, reps: '6-10 reps', rir: 'RIR 1', rest: '75 seg', note: 'Curl martillo para braquial.' },
+          { n: 'Cable One Arm Lateral Raise', m: 'Hombro', sets: 4, reps: '10 reps', rir: 'RIR 0-1', rest: '60-90 seg', note: 'Sube sin impulso lumbar.' }
+        ]},
+        'Vie': { title: 'Viernes — Descanso Pre-Récord', ex: [] },
+        'Sáb': { title: '⭐ Sábado — Banca Pesada + Empuje (RIR 1-2)', ex: [
+          { n: 'Bench Press (1 Top Single + 3 Back-offs)', m: 'Pecho', sets: 4, reps: '1x1 + 3x4-5', rir: 'RPE 8-8.5 / RIR 2', rest: '3 - 4 min', note: 'Serie 1: Top Single pesada. Series 2 a 4: Back-offs.' },
+          { n: 'Dumbbell Incline Bench Press', m: 'Pecho', sets: 3, reps: '7-10 reps', rir: 'RIR 1-2', rest: '2 min', note: 'Énfasis clavicular en banco a 30 grados.' },
+          { n: 'Cable Standing One Arm Tricep Pushdown', m: 'Tríceps', sets: 3, reps: '5-8 reps', rir: 'RIR 1', rest: '90 seg', note: 'Bloqueo firme de codos.' },
+          { n: 'Cable One Arm Lateral Raise', m: 'Hombro', sets: 3, reps: '10 reps', rir: 'RIR 1', rest: '60-90 seg', note: 'Control excéntrico en polea.' }
+        ]},
+        'Dom': { title: '⭐ Domingo — Pierna Completa (RIR 0-1)', ex: [
+          { n: 'Sled Hack Squat', m: 'Pierna', sets: 2, reps: '6-10 reps', rir: 'RIR 0-1', rest: '3 min', note: 'Profundidad completa.' },
+          { n: 'Sled 45° Leg Press', m: 'Pierna', sets: 2, reps: '8-9 reps', rir: 'RIR 0-1', rest: '2.5 min', note: 'Sin despegar el lumbar.' },
+          { n: 'Lever Seated Leg Curl', m: 'Pierna', sets: 2, reps: '6-9 reps', rir: 'RIR 0-1', rest: '90 seg', note: 'Contracción máxima 1 seg abajo.' },
+          { n: 'Lever Leg Extension', m: 'Pierna', sets: 2, reps: '8 reps', rir: 'RIR 0-1', rest: '90 seg', note: 'Aguanta 1 seg arriba.' },
+          { n: 'Lever Seated Squat Calf Raise on Leg Press', m: 'Gemelo', sets: 2, reps: '10 reps', rir: 'RIR 0-1', rest: '60-90 seg', note: 'Pausa 2 seg abajo.' }
+        ]}
+      }
+    }
+  };
+
+  function getSetsCount(mode, dayKey, idx, defaultSets) {
+    var k = mode + '_' + dayKey + '_' + idx;
+    if (state.setsMap[k] !== undefined) {
+      return state.setsMap[k];
+    }
+    return defaultSets;
+  }
+
+  function modSeries(idx, delta) {
+    var dayObj = routineData[state.mode].days[state.day];
+    if (!dayObj || !dayObj.ex[idx]) return;
+    var k = state.mode + '_' + state.day + '_' + idx;
+    var cur = getSetsCount(state.mode, state.day, idx, dayObj.ex[idx].sets);
+    var next = Math.max(1, Math.min(10, cur + delta));
+    state.setsMap[k] = next;
+    saveState();
+    renderRoutine();
+  }
+
+  function resetCustomSets() {
+    var prefix = state.mode + '_' + state.day + '_';
+    Object.keys(state.setsMap).forEach(function(k) {
+      if (k.indexOf(prefix) === 0) delete state.setsMap[k];
+    });
+    saveState();
+    renderRoutine();
+  }
+
+  function selectDayByIndex(dIdx) {
+    state.day = daysOrder[dIdx];
+    saveState();
+    renderRoutine();
+  }
+
+  function toggleCheckByIndex(idx) {
+    var key = state.mode + '_' + state.day + '_' + idx;
+    state.checks[key] = !state.checks[key];
+    saveState();
+    renderRoutine();
+  }
+
+  function resetDayChecks() {
+    var prefix = state.mode + '_' + state.day + '_';
+    Object.keys(state.checks).forEach(function(k) {
+      if (k.indexOf(prefix) === 0) delete state.checks[k];
+    });
+    saveState();
+    renderRoutine();
+  }
+
+  function renderRoutine() {
+    var data = routineData[state.mode];
+    document.getElementById('dayPillsContainer').innerHTML = daysOrder.map(function(d, dIdx) {
+      return '<div class="day-pill ' + (state.day === d ? 'active' : '') + '" onclick="selectDayByIndex(' + dIdx + ')">' +
+        d + (d === 'Sáb' || d === 'Dom' ? '<br>⭐' : '<br>•') +
+      '</div>';
+    }).join('');
+
+    var dayObj = data.days[state.day];
+    var totalDaySeries = 0;
+    dayObj.ex.forEach(function(e, i) {
+      totalDaySeries += getSetsCount(state.mode, state.day, i, e.sets);
+    });
+
+    document.getElementById('routineDayTitle').textContent = dayObj.title + (totalDaySeries > 0 ? ' (' + totalDaySeries + ' series)' : '');
+
+    if (dayObj.ex.length === 0) {
+      document.getElementById('routineExercisesContainer').innerHTML =
+        '<div style="padding:20px; text-align:center; color:var(--muted); font-size:14px;">' +
+          '🛌 <b>Día de Descanso Total</b><br>Recupera el sistema nervioso y los tendones para rendir al máximo en la siguiente sesión.' +
+        '</div>';
+    } else {
+      document.getElementById('routineExercisesContainer').innerHTML = dayObj.ex.map(function(e, idx) {
+        var key = state.mode + '_' + state.day + '_' + idx;
+        var done = !!state.checks[key];
+        var curSets = getSetsCount(state.mode, state.day, idx, e.sets);
+
+        return '<div class="ex-card ' + (done ? 'done' : '') + '" onclick="toggleCheckByIndex(' + idx + ')">' +
+          '<input type="checkbox" class="ex-check" ' + (done ? 'checked' : '') + ' onclick="event.stopPropagation(); toggleCheckByIndex(' + idx + ')">' +
+          '<div class="ex-info">' +
+            '<div class="ex-top">' +
+              '<div class="ex-name">' + e.n + '</div>' +
+              '<div class="series-box" onclick="event.stopPropagation();">' +
+                '<button class="s-btn" onclick="modSeries(' + idx + ', -1)">-</button>' +
+                '<span class="s-count">' + curSets + ' series</span>' +
+                '<button class="s-btn" onclick="modSeries(' + idx + ', 1)">+</button>' +
+              '</div>' +
+            '</div>' +
+            '<div class="ex-meta">' +
+              '<span class="meta-tag">📌 ' + curSets + ' x ' + e.reps + '</span>' +
+              '<span class="meta-tag" style="color:#fcd34d;">🔥 ' + e.rir + '</span>' +
+              '<span class="meta-tag">⏱️ ' + e.rest + '</span>' +
+            '</div>' +
+            '<div class="ex-note">' + e.note + '</div>' +
+          '</div>' +
+        '</div>';
+      }).join('');
+    }
+
+    // Cálculo automático del volumen semanal total según las series activas (+ / -)
+    var totals = { 'Pecho': 0, 'Espalda': 0, 'Hombro': 0, 'Tríceps': 0, 'Bíceps': 0, 'Pierna': 0, 'Gemelo': 0 };
+    daysOrder.forEach(function(dKey) {
+      var dItem = data.days[dKey];
+      dItem.ex.forEach(function(e, idx) {
+        var sCount = getSetsCount(state.mode, dKey, idx, e.sets);
+        totals[e.m] = (totals[e.m] || 0) + sCount;
+      });
+    });
+
+    document.getElementById('volGridContainer').innerHTML = Object.keys(totals).map(function(mName) {
+      return '<div class="vol-item"><span>' + mName + '</span><b>' + totals[mName] + ' series</b></div>';
+    }).join('');
+  }
+
+  function renderAll() {
+    document.getElementById('mode5Btn').classList.toggle('active', state.mode === '5d');
+    document.getElementById('mode4Btn').classList.toggle('active', state.mode === '4d');
+    renderBench();
+    renderRoutine();
+  }
+
+  renderAll();
+</script>
+</body>
+</html>
