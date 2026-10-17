@@ -49,7 +49,7 @@
       background: var(--card);
       padding: 6px;
       border-radius: 12px;
-      margin-bottom: 16px;
+      margin-bottom: 14px;
       border: 1px solid var(--border);
       position: sticky;
       top: 10px;
@@ -79,7 +79,7 @@
       margin-bottom: 16px;
     }
     .card-title {
-      font-size: 16px;
+      font-size: 15px;
       font-weight: 700;
       margin: 0 0 12px 0;
       display: flex;
@@ -91,7 +91,7 @@
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 8px;
-      margin-bottom: 14px;
+      margin-bottom: 12px;
     }
     .toggle-btn {
       background: var(--bg);
@@ -149,7 +149,7 @@
       display: grid;
       grid-template-columns: repeat(4, 1fr);
       gap: 6px;
-      margin-bottom: 16px;
+      margin-bottom: 14px;
     }
     .week-btn {
       background: var(--card);
@@ -166,6 +166,11 @@
       background: var(--accent);
       color: #fff;
       border-color: var(--accent);
+    }
+    .week-btn.deload-active {
+      background: var(--green);
+      color: #052e16;
+      border-color: var(--green);
     }
     .set-row {
       display: flex;
@@ -202,6 +207,17 @@
       color: var(--muted);
       line-height: 1.6;
     }
+    .deload-banner {
+      background: rgba(16, 185, 129, 0.14);
+      border: 1px solid var(--green);
+      color: #6ee7b7;
+      padding: 10px 12px;
+      border-radius: 12px;
+      margin-bottom: 14px;
+      font-size: 12px;
+      line-height: 1.45;
+      display: none;
+    }
     .days-scroll {
       display: grid;
       grid-template-columns: repeat(7, 1fr);
@@ -233,6 +249,9 @@
       display: flex;
       gap: 12px;
       align-items: flex-start;
+    }
+    .ex-card.deload-card {
+      border-color: rgba(16, 185, 129, 0.4);
     }
     .ex-card.done {
       opacity: 0.5;
@@ -365,6 +384,14 @@
     <button class="toggle-btn" id="mode4Btn" onclick="setMode('4d')">4 Días (Frecuencia 2)</button>
   </div>
 
+  <!-- SELECTOR DE SEMANA GLOBAL (AFECTA A BANCA Y A LA DESCARGA DE RUTINA) -->
+  <div class="week-grid">
+    <button class="week-btn active" id="wk1" onclick="setWeek(1)">Semana 1<br><small>Base</small></button>
+    <button class="week-btn" id="wk2" onclick="setWeek(2)">Semana 2<br><small>Acumul.</small></button>
+    <button class="week-btn" id="wk3" onclick="setWeek(3)">Semana 3<br><small>Examen</small></button>
+    <button class="week-btn" id="wk4" onclick="setWeek(4)">Semana 4<br><small>Descarga</small></button>
+  </div>
+
   <!-- VISTA 1: PROGRESIÓN DE BANCA -->
   <div id="viewBanca">
     <div class="card">
@@ -381,13 +408,6 @@
         <button class="step-btn" onclick="changeRM(2.5)">+2,5 kg</button>
       </div>
       <input type="range" id="rmSlider" min="60" max="180" step="2.5" value="110" oninput="onSliderRM(this.value)">
-    </div>
-
-    <div class="week-grid">
-      <button class="week-btn active" id="wk1" onclick="setWeek(1)">Semana 1<br><small>Base</small></button>
-      <button class="week-btn" id="wk2" onclick="setWeek(2)">Semana 2<br><small>Acumul.</small></button>
-      <button class="week-btn" id="wk3" onclick="setWeek(3)">Semana 3<br><small>Examen</small></button>
-      <button class="week-btn" id="wk4" onclick="setWeek(4)">Semana 4<br><small>Descarga</small></button>
     </div>
 
     <div id="benchDaysContainer"></div>
@@ -423,6 +443,8 @@
 
   <!-- VISTA 2: RUTINA SEMANAL COMPLETA -->
   <div id="viewRutina" style="display:none;">
+    <div id="deloadNoticeBanner" class="deload-banner"></div>
+
     <div class="days-scroll" id="dayPillsContainer"></div>
 
     <div class="card">
@@ -433,21 +455,21 @@
           <button onclick="resetCustomSets()" style="background:transparent; border:1px solid var(--border); color:var(--muted); border-radius:6px; padding:4px 8px; font-size:11px; cursor:pointer;">Series base</button>
         </div>
       </div>
+      <div id="legDeloadToggleBox" style="display:none; margin-bottom:12px;"></div>
       <div id="routineExercisesContainer"></div>
     </div>
 
     <div class="card">
-      <div class="card-title"><span>📊 Series Semanales Totales</span></div>
+      <div class="card-title"><span id="volCardTitle">📊 Series Semanales Totales</span></div>
       <div class="vol-grid" id="volGridContainer"></div>
       <p style="font-size:12px; color:var(--muted); margin:12px 0 0 0; line-height:1.4;">
-        💡 <b>Doble Progresión en Lyfta:</b> Mantén el mismo peso hasta lograr el tope de repeticiones en todas las series. La semana siguiente sube 2 - 2,5 kg y vuelve al mínimo del rango.
+        💡 <b>Doble Progresión en Lyfta:</b> En Semanas 1-3 mantén el mismo peso hasta lograr el tope de repeticiones en todas las series.En Semana 4 (Descarga) mantén el peso pero haz 2-3 reps menos por serie (RIR 3-4).
       </p>
     </div>
   </div>
 </div>
 
 <script>
-  // Funciones de memoria seguras para que nunca falle en vistas previas ni en Safari
   function safeGet(key, fallback) {
     try {
       var val = window.localStorage.getItem(key);
@@ -481,6 +503,7 @@
     week: parseInt(safeGet('pb_week', '1'), 10) || 1,
     block: parseInt(safeGet('pb_block', '1'), 10) || 1,
     day: safeGet('pb_day', 'Sáb'),
+    deloadLegs: safeGet('pb_deload_legs', '0') === '1',
     checks: safeGetJSON('pb_checks', {}),
     setsMap: safeGetJSON('pb_sets_map', {})
   };
@@ -495,6 +518,7 @@
     safeSet('pb_week', String(state.week));
     safeSet('pb_block', String(state.block));
     safeSet('pb_day', state.day);
+    safeSet('pb_deload_legs', state.deloadLegs ? '1' : '0');
     safeSet('pb_checks', JSON.stringify(state.checks));
     safeSet('pb_sets_map', JSON.stringify(state.setsMap));
   }
@@ -522,28 +546,41 @@
     state.oneRM = Math.min(180, Math.max(60, state.oneRM + delta));
     document.getElementById('rmSlider').value = state.oneRM;
     saveState();
-    renderBench();
+    renderAll();
   }
 
   function onSliderRM(val) {
     state.oneRM = parseFloat(val);
     saveState();
-    renderBench();
+    renderAll();
   }
 
   function setWeek(w) {
     state.week = w;
     saveState();
-    renderBench();
+    renderAll();
+  }
+
+  function toggleLegDeload() {
+    state.deloadLegs = !state.deloadLegs;
+    saveState();
+    renderRoutine();
+  }
+
+  function updateWeekButtons() {
+    for (var i = 1; i <= 4; i++) {
+      var btn = document.getElementById('wk' + i);
+      btn.classList.remove('active', 'deload-active');
+      if (state.week === i) {
+        btn.classList.add(i === 4 ? 'deload-active' : 'active');
+      }
+    }
   }
 
   function renderBench() {
     document.getElementById('rmValueText').textContent = state.oneRM + ' kg';
     document.getElementById('rmSlider').value = state.oneRM;
     document.getElementById('blockBadge').textContent = 'Bloque #' + state.block;
-    for (var i = 1; i <= 4; i++) {
-      document.getElementById('wk' + i).classList.toggle('active', state.week === i);
-    }
 
     var rm = state.oneRM;
     var w = state.week;
@@ -592,9 +629,9 @@
         { name: 'Descarga Activa (Sin Single)', reps: '3 x 5', pct: 75, rir: 'RIR 3-4', cls: 'rir-green' }
       ];
       tueSets = state.mode === '5d' ? [
-        { name: 'Descarga Hipertrofia', reps: '2 x 8', pct: 68, rir: 'RIR 3', cls: 'rir-green' }
+        { name: 'Descarga Hipertrofia', reps: '2 x 8', pct: 68, rir: 'RIR 3-4', cls: 'rir-green' }
       ] : [
-        { name: 'Descarga Pausa 1s', reps: '3 x 6', pct: 70, rir: 'RIR 3', cls: 'rir-green' }
+        { name: 'Descarga Pausa 1s', reps: '3 x 6', pct: 70, rir: 'RIR 3-4', cls: 'rir-green' }
       ];
       thuSets = [{ name: 'Descarga Técnica Pausa 2s', reps: '3 x 4', pct: 66, rir: 'RPE 6', cls: 'rir-green' }];
     }
@@ -651,7 +688,6 @@
 
     document.getElementById('benchDaysContainer').innerHTML = html;
 
-    // Evaluador Semana 3
     var w3Single = r25(rm * 0.93);
     var w3Backoff = r25(rm * 0.84);
     document.getElementById('evalSingleLabel').textContent = '1. ¿Cómo subió la Single de Sem 3 (' + w3Single + ' kg)?';
@@ -690,49 +726,49 @@
     state.block += 1;
     state.week = 1;
     saveState();
-    renderBench();
+    renderAll();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  // RUTINAS ACTUALIZADAS CON LOS EJERCICIOS DE TUS CAPTURAS DE LYFTA
+  // RUTINAS CON PARÁMETROS NORMALES (SEM 1-3) Y DE DESCARGA (SEM 4)
   var routineData = {
     '5d': {
       days: {
         'Lun': { title: 'Lunes — Descanso Total', ex: [] },
-        'Mar': { title: 'Martes — Banca Hipertrofia + Empuje (RIR 0-2)', ex: [
-          { n: 'Bench Press', m: 'Pecho', sets: 3, reps: '8-10 reps', rir: 'RIR 1-2 (70-75%)', rest: '2.5 - 3 min', note: 'Bajada controlada tocando suave el pecho sin rebotar.' },
-          { n: 'Lever Seated Shoulder Press', m: 'Hombro', sets: 3, reps: '6-9 reps', rir: 'RIR 1-2', rest: '2 min', note: 'Recorrido completo controlando la bajada.' },
-          { n: 'Dumbbell Incline Bench Press', m: 'Pecho', sets: 3, reps: '7-10 reps', rir: 'RIR 1-2', rest: '2 min', note: 'Banco a 30 grados, máximo estiramiento abajo.' },
-          { n: 'Cable Standing One Arm Tricep Pushdown', m: 'Tríceps', sets: 3, reps: '5-8 reps', rir: 'RIR 1', rest: '90 seg', note: 'Codo fijo al costado, bloqueo completo abajo.' },
-          { n: 'Lateral Raise', m: 'Hombro', sets: 4, reps: '7-13 reps', rir: 'RIR 0-1', rest: '60-90 seg', note: 'Plano escapular, guiando con los codos.' }
+        'Mar': { title: 'Martes — Banca Hipertrofia + Empuje', ex: [
+          { n: 'Bench Press', m: 'Pecho', sets: 3, dSets: 2, reps: '8-10 reps', dReps: '8 reps (68% RM)', rir: 'RIR 1-2 (70-75%)', dRir: 'RIR 3-4 (Descarga)', rest: '2.5 - 3 min', note: 'Bajada controlada tocando suave el pecho sin rebotar.' },
+          { n: 'Lever Seated Shoulder Press', m: 'Hombro', sets: 3, dSets: 2, reps: '6-9 reps', dReps: '6 reps', rir: 'RIR 1-2', dRir: 'RIR 3-4 (Descarga)', rest: '2 min', note: 'En descarga usa tu peso normal de 8-9 reps pero para en 6.' },
+          { n: 'Dumbbell Incline Bench Press', m: 'Pecho', sets: 3, dSets: 2, reps: '7-10 reps', dReps: '6-7 reps', rir: 'RIR 1-2', dRir: 'RIR 3-4 (Descarga)', rest: '2 min', note: 'Banco a 30 grados. En descarga mantén mancuernas parando 3 reps antes.' },
+          { n: 'Cable Standing One Arm Tricep Pushdown', m: 'Tríceps', sets: 3, dSets: 2, reps: '5-8 reps', dReps: '6 reps', rir: 'RIR 1', dRir: 'RIR 3 (Descarga)', rest: '90 seg', note: 'Codo fijo al costado, bloqueo completo abajo.' },
+          { n: 'Lateral Raise', m: 'Hombro', sets: 4, dSets: 2, reps: '7-13 reps', dReps: '10 reps', rir: 'RIR 0-1', dRir: 'RIR 3 (Descarga)', rest: '60-90 seg', note: 'Plano escapular, guiando con los codos.' }
         ]},
-        'Mié': { title: 'Miércoles — Tirón Principal (RIR 0-1)', ex: [
-          { n: 'Pulldown', m: 'Espalda', sets: 4, reps: '7-10 reps', rir: 'RIR 0-1', rest: '2 min', note: 'Pecho alto hacia la barra deprimiendo escápulas.' },
-          { n: 'Lever Lying T-bar Row', m: 'Espalda', sets: 4, reps: '8 reps', rir: 'RIR 0-1', rest: '2 min', note: 'Pecho apoyado, máxima densidad de espalda.' },
-          { n: 'Straight Back Seated Row', m: 'Espalda', sets: 3, reps: '8-10 reps', rir: 'RIR 0-1', rest: '90-120 seg', note: 'Espalda recta, pausa de 1 seg en contracción.' },
-          { n: 'EZ-bar Biceps Curl', m: 'Bíceps', sets: 3, reps: '7-8 reps', rir: 'RIR 0-1', rest: '90 seg', note: 'Codos pegados al costado sin balanceo lumbar.' }
+        'Mié': { title: 'Miércoles — Tirón Principal', ex: [
+          { n: 'Pulldown', m: 'Espalda', sets: 4, dSets: 2, reps: '7-10 reps', dReps: '7-8 reps', rir: 'RIR 0-1', dRir: 'RIR 3 (Descarga)', rest: '2 min', note: 'Pecho alto hacia la barra deprimiendo escápulas.' },
+          { n: 'Lever Lying T-bar Row', m: 'Espalda', sets: 4, dSets: 2, reps: '8 reps', dReps: '6 reps', rir: 'RIR 0-1', dRir: 'RIR 3-4 (Descarga)', rest: '2 min', note: 'Pecho apoyado. En descarga usa el mismo peso pero solo 2x6.' },
+          { n: 'Straight Back Seated Row', m: 'Espalda', sets: 3, dSets: 2, reps: '8-10 reps', dReps: '8 reps', rir: 'RIR 0-1', dRir: 'RIR 3 (Descarga)', rest: '90-120 seg', note: 'Espalda recta, pausa de 1 seg en contracción.' },
+          { n: 'EZ-bar Biceps Curl', m: 'Bíceps', sets: 3, dSets: 2, reps: '7-8 reps', dReps: '6 reps', rir: 'RIR 0-1', dRir: 'RIR 3 (Descarga)', rest: '90 seg', note: 'Descanso clave para los tendones del codo en Semana 4.' }
         ]},
-        'Jue': { title: 'Jueves — Torso Ligero (Pausa 2s, Torso RIR 2)', ex: [
-          { n: 'Bench Press (Pausa 2s)', m: 'Pecho', sets: 4, reps: '4-5 reps', rir: 'RPE 7 (70-72.5%)', rest: '2.5 min', note: 'PROHIBIDO IR AL FALLO. Pausa estricta de 2s y sube explosivo.' },
-          { n: 'Lever Narrow Grip Seated Row', m: 'Espalda', sets: 3, reps: '12 reps', rir: 'RIR 2', rest: '90 seg', note: 'Control técnico guardando 2 reps en recámara.' },
-          { n: 'Pulldown', m: 'Espalda', sets: 3, reps: '7-10 reps', rir: 'RIR 2', rest: '90 seg', note: 'Bombeo limpio sin fatigar para el sábado.' },
-          { n: 'Triceps Pushdown', m: 'Tríceps', sets: 2, reps: '8-10 reps', rir: 'RIR 2', rest: '75 seg', note: 'Guárdate 2 reps en tríceps para llegar fresco al sábado.' },
-          { n: 'Hammer Curl', m: 'Bíceps', sets: 2, reps: '6-10 reps', rir: 'RIR 2', rest: '75 seg', note: 'Trabajo de braquial y antebrazo sin llegar al fallo.' },
-          { n: 'Cable One Arm Lateral Raise', m: 'Hombro', sets: 3, reps: '10 reps', rir: 'RIR 2', rest: '60-90 seg', note: 'Tensión constante desde abajo en polea.' }
+        'Jue': { title: 'Jueves — Torso Ligero (Pausa 2s)', ex: [
+          { n: 'Bench Press (Pausa 2s)', m: 'Pecho', sets: 4, dSets: 3, reps: '4-5 reps', dReps: '4 reps (66% RM)', rir: 'RPE 7 (70-72.5%)', dRir: 'RPE 6 (Descarga)', rest: '2.5 min', note: 'Pausa estricta de 2s en pecho y sube explosivo.' },
+          { n: 'Lever Narrow Grip Seated Row', m: 'Espalda', sets: 3, dSets: 2, reps: '12 reps', dReps: '10 reps', rir: 'RIR 2', dRir: 'RIR 4 (Descarga)', rest: '90 seg', note: 'Control técnico guardando 2-4 reps en recámara.' },
+          { n: 'Pulldown', m: 'Espalda', sets: 3, dSets: 2, reps: '7-10 reps', dReps: '8 reps', rir: 'RIR 2', dRir: 'RIR 4 (Descarga)', rest: '90 seg', note: 'Bombeo limpio sin fatigar para el sábado.' },
+          { n: 'Triceps Pushdown', m: 'Tríceps', sets: 2, dSets: 1, reps: '8-10 reps', dReps: '8 reps', rir: 'RIR 2', dRir: 'RIR 4 (Descarga)', rest: '75 seg', note: 'Guárdate reps en tríceps para llegar fresco al sábado.' },
+          { n: 'Hammer Curl', m: 'Bíceps', sets: 2, dSets: 1, reps: '6-10 reps', dReps: '8 reps', rir: 'RIR 2', dRir: 'RIR 4 (Descarga)', rest: '75 seg', note: 'Trabajo de braquial y antebrazo sin llegar al fallo.' },
+          { n: 'Cable One Arm Lateral Raise', m: 'Hombro', sets: 3, dSets: 2, reps: '10 reps', dReps: '8-10 reps', rir: 'RIR 2', dRir: 'RIR 3-4 (Descarga)', rest: '60-90 seg', note: 'Tensión constante desde abajo en polea.' }
         ]},
         'Vie': { title: 'Viernes — Descanso Pre-Récord', ex: [] },
-        'Sáb': { title: '⭐ Sábado — Banca Pesada + Empuje (RIR 1-2)', ex: [
-          { n: 'Bench Press (1 Top Single + 3 Back-offs)', m: 'Pecho', sets: 4, reps: '1x1 + 3x4-5', rir: 'RPE 8-8.5 / RIR 2', rest: '3 - 4 min', note: 'Serie 1: Top Single pesada. Series 2 a 4: Back-offs.' },
-          { n: 'Dumbbell Incline Bench Press', m: 'Pecho', sets: 3, reps: '7-10 reps', rir: 'RIR 1-2', rest: '2 min', note: 'Banco a 30 grados. Recorrido profundo.' },
-          { n: 'Cable Standing One Arm Tricep Pushdown', m: 'Tríceps', sets: 3, reps: '5-8 reps', rir: 'RIR 1', rest: '90 seg', note: 'Fuerza de bloqueo unilateral para la banca.' },
-          { n: 'Cable One Arm Lateral Raise', m: 'Hombro', sets: 3, reps: '10 reps', rir: 'RIR 1', rest: '60-90 seg', note: 'Control en la bajada.' }
+        'Sáb': { title: '⭐ Sábado — Banca Pesada + Empuje', ex: [
+          { n: 'Bench Press (Pesada)', m: 'Pecho', sets: 4, dSets: 3, reps: '1x1 + 3x4-5', dReps: '5 reps (75% Sin Single)', rir: 'RPE 8-8.5 / RIR 2', dRir: 'RIR 3-4 (Descarga)', rest: '3 - 4 min', note: 'En Semana 4 se elimina la Top Single para regenerar sistema nervioso.' },
+          { n: 'Dumbbell Incline Bench Press', m: 'Pecho', sets: 3, dSets: 2, reps: '7-10 reps', dReps: '7 reps', rir: 'RIR 1-2', dRir: 'RIR 3 (Descarga)', rest: '2 min', note: 'Banco a 30 grados. Recorrido profundo.' },
+          { n: 'Cable Standing One Arm Tricep Pushdown', m: 'Tríceps', sets: 3, dSets: 2, reps: '5-8 reps', dReps: '6 reps', rir: 'RIR 1', dRir: 'RIR 3 (Descarga)', rest: '90 seg', note: 'Fuerza de bloqueo unilateral para la banca.' },
+          { n: 'Cable One Arm Lateral Raise', m: 'Hombro', sets: 3, dSets: 2, reps: '10 reps', dReps: '8-10 reps', rir: 'RIR 1', dRir: 'RIR 3 (Descarga)', rest: '60-90 seg', note: 'Control en la bajada.' }
         ]},
-        'Dom': { title: '⭐ Domingo — Pierna Completa (RIR 0-1)', ex: [
-          { n: 'Sled Hack Squat', m: 'Pierna', sets: 2, reps: '6-10 reps', rir: 'RIR 0-1', rest: '3 min', note: 'Profundidad completa sin despegar talón ni espalda.' },
-          { n: 'Sled 45° Leg Press', m: 'Pierna', sets: 2, reps: '8-9 reps', rir: 'RIR 0-1', rest: '2.5 min', note: 'Pies medios/bajos sin despegar el lumbar.' },
-          { n: 'Lever Seated Leg Curl', m: 'Pierna', sets: 2, reps: '6-9 reps', rir: 'RIR 0-1', rest: '90 seg', note: 'Pausa de 1 seg en máxima contracción.' },
-          { n: 'Lever Leg Extension', m: 'Pierna', sets: 2, reps: '8 reps', rir: 'RIR 0-1', rest: '90 seg', note: 'Pausa de 1 seg arriba del todo.' },
-          { n: 'Lever Seated Squat Calf Raise on Leg Press', m: 'Gemelo', sets: 2, reps: '10 reps', rir: 'RIR 0-1', rest: '60-90 seg', note: 'Pausa de 2 seg abajo para quitar el rebote.' }
+        'Dom': { title: '⭐ Domingo — Pierna Completa', isLegs: true, ex: [
+          { n: 'Sled Hack Squat', m: 'Pierna', sets: 2, dSets: 1, reps: '6-10 reps', dReps: '6-8 reps', rir: 'RIR 0-1', dRir: 'RIR 2-3 (Descarga)', rest: '3 min', note: 'Profundidad completa sin despegar talón ni espalda.' },
+          { n: 'Sled 45° Leg Press', m: 'Pierna', sets: 2, dSets: 1, reps: '8-9 reps', dReps: '8 reps', rir: 'RIR 0-1', dRir: 'RIR 2-3 (Descarga)', rest: '2.5 min', note: 'Pies medios/bajos sin despegar el lumbar.' },
+          { n: 'Lever Seated Leg Curl', m: 'Pierna', sets: 2, dSets: 1, reps: '6-9 reps', dReps: '7-8 reps', rir: 'RIR 0-1', dRir: 'RIR 2-3 (Descarga)', rest: '90 seg', note: 'Pausa de 1 seg en máxima contracción.' },
+          { n: 'Lever Leg Extension', m: 'Pierna', sets: 2, dSets: 1, reps: '8 reps', dReps: '8 reps', rir: 'RIR 0-1', dRir: 'RIR 2-3 (Descarga)', rest: '90 seg', note: 'Pausa de 1 seg arriba del todo.' },
+          { n: 'Lever Seated Squat Calf Raise on Leg Press', m: 'Gemelo', sets: 2, dSets: 1, reps: '10 reps', dReps: '8-10 reps', rir: 'RIR 0-1', dRir: 'RIR 2-3 (Descarga)', rest: '60-90 seg', note: 'Pausa de 2 seg abajo para quitar el rebote.' }
         ]}
       }
     },
@@ -740,53 +776,61 @@
       days: {
         'Lun': { title: 'Lunes — Descanso Total', ex: [] },
         'Mar': { title: 'Martes — Banca 2 (Pausa 1s) + Torso', ex: [
-          { n: 'Bench Press (Pausa 1s)', m: 'Pecho', sets: 4, reps: '6-8 reps', rir: 'RIR 1-2 (75-78%)', rest: '2.5 - 3 min', note: 'Pausa de 1 seg en el pecho en todas las reps.' },
-          { n: 'Lever Lying T-bar Row', m: 'Espalda', sets: 4, reps: '8 reps', rir: 'RIR 1', rest: '2 min', note: 'Densidad de espalda alta con pecho apoyado.' },
-          { n: 'Lever Seated Shoulder Press', m: 'Hombro', sets: 3, reps: '6-9 reps', rir: 'RIR 1-2', rest: '2 min', note: 'Recorrido completo controlado.' },
-          { n: 'Pulldown', m: 'Espalda', sets: 3, reps: '7-10 reps', rir: 'RIR 1', rest: '90-120 seg', note: 'Estira bien los dorsales arriba.' },
-          { n: 'Cable Standing One Arm Tricep Pushdown', m: 'Tríceps', sets: 3, reps: '5-8 reps', rir: 'RIR 1', rest: '90 seg', note: 'Tríceps unilateral en polea.' },
-          { n: 'Lateral Raise', m: 'Hombro', sets: 3, reps: '7-13 reps', rir: 'RIR 0-1', rest: '60-90 seg', note: 'Elevaciones laterales con mancuernas.' }
+          { n: 'Bench Press (Pausa 1s)', m: 'Pecho', sets: 4, dSets: 3, reps: '6-8 reps', dReps: '6 reps (70% RM)', rir: 'RIR 1-2 (75-78%)', dRir: 'RIR 3-4 (Descarga)', rest: '2.5 - 3 min', note: 'Pausa de 1 seg en el pecho en todas las reps.' },
+          { n: 'Lever Lying T-bar Row', m: 'Espalda', sets: 4, dSets: 2, reps: '8 reps', dReps: '6 reps', rir: 'RIR 1', dRir: 'RIR 3-4 (Descarga)', rest: '2 min', note: 'Densidad de espalda alta con pecho apoyado.' },
+          { n: 'Lever Seated Shoulder Press', m: 'Hombro', sets: 3, dSets: 2, reps: '6-9 reps', dReps: '6 reps', rir: 'RIR 1-2', dRir: 'RIR 3-4 (Descarga)', rest: '2 min', note: 'Recorrido completo controlado.' },
+          { n: 'Pulldown', m: 'Espalda', sets: 3, dSets: 2, reps: '7-10 reps', dReps: '7-8 reps', rir: 'RIR 1', dRir: 'RIR 3 (Descarga)', rest: '90-120 seg', note: 'Estira bien los dorsales arriba.' },
+          { n: 'Cable Standing One Arm Tricep Pushdown', m: 'Tríceps', sets: 3, dSets: 2, reps: '5-8 reps', dReps: '6 reps', rir: 'RIR 1', dRir: 'RIR 3 (Descarga)', rest: '90 seg', note: 'Tríceps unilateral en polea.' },
+          { n: 'Lateral Raise', m: 'Hombro', sets: 3, dSets: 2, reps: '7-13 reps', dReps: '10 reps', rir: 'RIR 0-1', dRir: 'RIR 3 (Descarga)', rest: '60-90 seg', note: 'Elevaciones laterales con mancuernas.' }
         ]},
         'Mié': { title: 'Miércoles — Descanso Total', ex: [] },
         'Jue': { title: 'Jueves — Tirón Principal + Hombro y Bíceps', ex: [
-          { n: 'Pulldown', m: 'Espalda', sets: 4, reps: '7-10 reps', rir: 'RIR 0-1', rest: '2 min', note: 'Tracción vertical principal.' },
-          { n: 'Straight Back Seated Row', m: 'Espalda', sets: 3, reps: '8-10 reps', rir: 'RIR 0-1', rest: '2 min', note: 'Tira hacia el abdomen con espalda recta.' },
-          { n: 'Lever Narrow Grip Seated Row', m: 'Espalda', sets: 3, reps: '12 reps', rir: 'RIR 1', rest: '90 seg', note: 'Remo agarre estrecho controlado.' },
-          { n: 'EZ-bar Biceps Curl', m: 'Bíceps', sets: 3, reps: '7-8 reps', rir: 'RIR 0-1', rest: '90 seg', note: 'Fuerza base de bíceps en barra Z.' },
-          { n: 'Hammer Curl', m: 'Bíceps', sets: 2, reps: '6-10 reps', rir: 'RIR 1', rest: '75 seg', note: 'Curl martillo para braquial.' },
-          { n: 'Cable One Arm Lateral Raise', m: 'Hombro', sets: 4, reps: '10 reps', rir: 'RIR 0-1', rest: '60-90 seg', note: 'Sube sin impulso lumbar.' }
+          { n: 'Pulldown', m: 'Espalda', sets: 4, dSets: 2, reps: '7-10 reps', dReps: '7-8 reps', rir: 'RIR 0-1', dRir: 'RIR 3 (Descarga)', rest: '2 min', note: 'Tracción vertical principal.' },
+          { n: 'Straight Back Seated Row', m: 'Espalda', sets: 3, dSets: 2, reps: '8-10 reps', dReps: '8 reps', rir: 'RIR 0-1', dRir: 'RIR 3 (Descarga)', rest: '2 min', note: 'Tira hacia el abdomen con espalda recta.' },
+          { n: 'Lever Narrow Grip Seated Row', m: 'Espalda', sets: 3, dSets: 2, reps: '12 reps', dReps: '10 reps', rir: 'RIR 1', dRir: 'RIR 3-4 (Descarga)', rest: '90 seg', note: 'Remo agarre estrecho controlado.' },
+          { n: 'EZ-bar Biceps Curl', m: 'Bíceps', sets: 3, dSets: 2, reps: '7-8 reps', dReps: '6 reps', rir: 'RIR 0-1', dRir: 'RIR 3 (Descarga)', rest: '90 seg', note: 'Fuerza base de bíceps en barra Z.' },
+          { n: 'Hammer Curl', m: 'Bíceps', sets: 2, dSets: 1, reps: '6-10 reps', dReps: '8 reps', rir: 'RIR 1', dRir: 'RIR 3 (Descarga)', rest: '75 seg', note: 'Curl martillo para braquial.' },
+          { n: 'Cable One Arm Lateral Raise', m: 'Hombro', sets: 4, dSets: 2, reps: '10 reps', dReps: '8-10 reps', rir: 'RIR 0-1', dRir: 'RIR 3 (Descarga)', rest: '60-90 seg', note: 'Sube sin impulso lumbar.' }
         ]},
         'Vie': { title: 'Viernes — Descanso Pre-Récord', ex: [] },
-        'Sáb': { title: '⭐ Sábado — Banca Pesada + Empuje (RIR 1-2)', ex: [
-          { n: 'Bench Press (1 Top Single + 3 Back-offs)', m: 'Pecho', sets: 4, reps: '1x1 + 3x4-5', rir: 'RPE 8-8.5 / RIR 2', rest: '3 - 4 min', note: 'Serie 1: Top Single pesada. Series 2 a 4: Back-offs.' },
-          { n: 'Dumbbell Incline Bench Press', m: 'Pecho', sets: 3, reps: '7-10 reps', rir: 'RIR 1-2', rest: '2 min', note: 'Énfasis clavicular en banco a 30 grados.' },
-          { n: 'Cable Standing One Arm Tricep Pushdown', m: 'Tríceps', sets: 3, reps: '5-8 reps', rir: 'RIR 1', rest: '90 seg', note: 'Bloqueo firme de codos.' },
-          { n: 'Cable One Arm Lateral Raise', m: 'Hombro', sets: 3, reps: '10 reps', rir: 'RIR 1', rest: '60-90 seg', note: 'Control excéntrico en polea.' }
+        'Sáb': { title: '⭐ Sábado — Banca Pesada + Empuje', ex: [
+          { n: 'Bench Press (Pesada)', m: 'Pecho', sets: 4, dSets: 3, reps: '1x1 + 3x4-5', dReps: '5 reps (75% Sin Single)', rir: 'RPE 8-8.5 / RIR 2', dRir: 'RIR 3-4 (Descarga)', rest: '3 - 4 min', note: 'En Semana 4 se elimina la Top Single.' },
+          { n: 'Dumbbell Incline Bench Press', m: 'Pecho', sets: 3, dSets: 2, reps: '7-10 reps', dReps: '7 reps', rir: 'RIR 1-2', dRir: 'RIR 3 (Descarga)', rest: '2 min', note: 'Énfasis clavicular en banco a 30 grados.' },
+          { n: 'Cable Standing One Arm Tricep Pushdown', m: 'Tríceps', sets: 3, dSets: 2, reps: '5-8 reps', dReps: '6 reps', rir: 'RIR 1', dRir: 'RIR 3 (Descarga)', rest: '90 seg', note: 'Bloqueo firme de codos.' },
+          { n: 'Cable One Arm Lateral Raise', m: 'Hombro', sets: 3, dSets: 2, reps: '10 reps', dReps: '8-10 reps', rir: 'RIR 1', dRir: 'RIR 3 (Descarga)', rest: '60-90 seg', note: 'Control excéntrico en polea.' }
         ]},
-        'Dom': { title: '⭐ Domingo — Pierna Completa (RIR 0-1)', ex: [
-          { n: 'Sled Hack Squat', m: 'Pierna', sets: 2, reps: '6-10 reps', rir: 'RIR 0-1', rest: '3 min', note: 'Profundidad completa.' },
-          { n: 'Sled 45° Leg Press', m: 'Pierna', sets: 2, reps: '8-9 reps', rir: 'RIR 0-1', rest: '2.5 min', note: 'Sin despegar el lumbar.' },
-          { n: 'Lever Seated Leg Curl', m: 'Pierna', sets: 2, reps: '6-9 reps', rir: 'RIR 0-1', rest: '90 seg', note: 'Contracción máxima 1 seg abajo.' },
-          { n: 'Lever Leg Extension', m: 'Pierna', sets: 2, reps: '8 reps', rir: 'RIR 0-1', rest: '90 seg', note: 'Aguanta 1 seg arriba.' },
-          { n: 'Lever Seated Squat Calf Raise on Leg Press', m: 'Gemelo', sets: 2, reps: '10 reps', rir: 'RIR 0-1', rest: '60-90 seg', note: 'Pausa 2 seg abajo.' }
+        'Dom': { title: '⭐ Domingo — Pierna Completa', isLegs: true, ex: [
+          { n: 'Sled Hack Squat', m: 'Pierna', sets: 2, dSets: 1, reps: '6-10 reps', dReps: '6-8 reps', rir: 'RIR 0-1', dRir: 'RIR 2-3 (Descarga)', rest: '3 min', note: 'Profundidad completa.' },
+          { n: 'Sled 45° Leg Press', m: 'Pierna', sets: 2, dSets: 1, reps: '8-9 reps', dReps: '8 reps', rir: 'RIR 0-1', dRir: 'RIR 2-3 (Descarga)', rest: '2.5 min', note: 'Sin despegar el lumbar.' },
+          { n: 'Lever Seated Leg Curl', m: 'Pierna', sets: 2, dSets: 1, reps: '6-9 reps', dReps: '7-8 reps', rir: 'RIR 0-1', dRir: 'RIR 2-3 (Descarga)', rest: '90 seg', note: 'Contracción máxima 1 seg abajo.' },
+          { n: 'Lever Leg Extension', m: 'Pierna', sets: 2, dSets: 1, reps: '8 reps', dReps: '8 reps', rir: 'RIR 0-1', dRir: 'RIR 2-3 (Descarga)', rest: '90 seg', note: 'Aguanta 1 seg arriba.' },
+          { n: 'Lever Seated Squat Calf Raise on Leg Press', m: 'Gemelo', sets: 2, dSets: 1, reps: '10 reps', dReps: '8-10 reps', rir: 'RIR 0-1', dRir: 'RIR 2-3 (Descarga)', rest: '60-90 seg', note: 'Pausa 2 seg abajo.' }
         ]}
       }
     }
   };
 
-  function getSetsCount(mode, dayKey, idx, defaultSets) {
-    var k = mode + '_' + dayKey + '_' + idx;
+  function isDeloadActiveForDay(dayKey) {
+    if (state.week !== 4) return false;
+    if (dayKey === 'Dom') return state.deloadLegs;
+    return true;
+  }
+
+  function getSetsCount(mode, dayKey, idx, exObj) {
+    var deload = isDeloadActiveForDay(dayKey);
+    var k = mode + '_' + dayKey + '_' + idx + (deload ? '_deload' : '_norm');
     if (state.setsMap[k] !== undefined) {
       return state.setsMap[k];
     }
-    return defaultSets;
+    return deload ? exObj.dSets : exObj.sets;
   }
 
   function modSeries(idx, delta) {
     var dayObj = routineData[state.mode].days[state.day];
     if (!dayObj || !dayObj.ex[idx]) return;
-    var k = state.mode + '_' + state.day + '_' + idx;
-    var cur = getSetsCount(state.mode, state.day, idx, dayObj.ex[idx].sets);
+    var deload = isDeloadActiveForDay(state.day);
+    var k = state.mode + '_' + state.day + '_' + idx + (deload ? '_deload' : '_norm');
+    var cur = getSetsCount(state.mode, state.day, idx, dayObj.ex[idx]);
     var next = Math.max(1, Math.min(10, cur + delta));
     state.setsMap[k] = next;
     saveState();
@@ -809,14 +853,14 @@
   }
 
   function toggleCheckByIndex(idx) {
-    var key = state.mode + '_' + state.day + '_' + idx;
+    var key = state.mode + '_' + state.day + '_w' + state.week + '_' + idx;
     state.checks[key] = !state.checks[key];
     saveState();
     renderRoutine();
   }
 
   function resetDayChecks() {
-    var prefix = state.mode + '_' + state.day + '_';
+    var prefix = state.mode + '_' + state.day + '_w' + state.week + '_';
     Object.keys(state.checks).forEach(function(k) {
       if (k.indexOf(prefix) === 0) delete state.checks[k];
     });
@@ -826,6 +870,14 @@
 
   function renderRoutine() {
     var data = routineData[state.mode];
+    var banner = document.getElementById('deloadNoticeBanner');
+    if (state.week === 4) {
+      banner.style.display = 'block';
+      banner.innerHTML = '🟢 <b>MODO SEMANA 4 (DESCARGA GENERAL ACTIVO):</b> Se han reducido las series de torso un 35-50% y el esfuerzo baja a <b>RIR 3-4</b>. Mantén tus pesos habituales pero para 2 o 3 repeticiones antes.';
+    } else {
+      banner.style.display = 'none';
+    }
+
     document.getElementById('dayPillsContainer').innerHTML = daysOrder.map(function(d, dIdx) {
       return '<div class="day-pill ' + (state.day === d ? 'active' : '') + '" onclick="selectDayByIndex(' + dIdx + ')">' +
         d + (d === 'Sáb' || d === 'Dom' ? '<br>⭐' : '<br>•') +
@@ -833,9 +885,22 @@
     }).join('');
 
     var dayObj = data.days[state.day];
+    var deloadToday = isDeloadActiveForDay(state.day);
+
+    // Botón especial en Domingo durante la Semana 4 para elegir si descargar pierna o no
+    var legToggleBox = document.getElementById('legDeloadToggleBox');
+    if (state.week === 4 && state.day === 'Dom') {
+      legToggleBox.style.display = 'block';
+      legToggleBox.innerHTML = '<button onclick="toggleLegDeload()" style="width:100%; padding:10px; border-radius:10px; border:1px solid ' + (state.deloadLegs ? 'var(--green)' : 'var(--border)') + '; background:' + (state.deloadLegs ? 'rgba(16,185,129,0.18)' : 'var(--bg)') + '; color:' + (state.deloadLegs ? '#6ee7b7' : '#cbd5e1') + '; font-size:12px; font-weight:700; cursor:pointer;">' +
+        (state.deloadLegs ? '🟢 Descarga de Pierna ACTIVADA (1 serie a RIR 2-3) — Toca para entrenar normal' : '⚡ Pierna en modo NORMAL (2 series a RIR 0-1) — Toca aquí si estás fatigado y quieres descargar pierna') +
+      '</button>';
+    } else {
+      legToggleBox.style.display = 'none';
+    }
+
     var totalDaySeries = 0;
     dayObj.ex.forEach(function(e, i) {
-      totalDaySeries += getSetsCount(state.mode, state.day, i, e.sets);
+      totalDaySeries += getSetsCount(state.mode, state.day, i, e);
     });
 
     document.getElementById('routineDayTitle').textContent = dayObj.title + (totalDaySeries > 0 ? ' (' + totalDaySeries + ' series)' : '');
@@ -847,11 +912,14 @@
         '</div>';
     } else {
       document.getElementById('routineExercisesContainer').innerHTML = dayObj.ex.map(function(e, idx) {
-        var key = state.mode + '_' + state.day + '_' + idx;
+        var key = state.mode + '_' + state.day + '_w' + state.week + '_' + idx;
         var done = !!state.checks[key];
-        var curSets = getSetsCount(state.mode, state.day, idx, e.sets);
+        var curSets = getSetsCount(state.mode, state.day, idx, e);
+        var curReps = deloadToday ? e.dReps : e.reps;
+        var curRir = deloadToday ? e.dRir : e.rir;
+        var rirColor = deloadToday ? '#6ee7b7' : '#fcd34d';
 
-        return '<div class="ex-card ' + (done ? 'done' : '') + '" onclick="toggleCheckByIndex(' + idx + ')">' +
+        return '<div class="ex-card ' + (deloadToday ? 'deload-card ' : '') + (done ? 'done' : '') + '" onclick="toggleCheckByIndex(' + idx + ')">' +
           '<input type="checkbox" class="ex-check" ' + (done ? 'checked' : '') + ' onclick="event.stopPropagation(); toggleCheckByIndex(' + idx + ')">' +
           '<div class="ex-info">' +
             '<div class="ex-top">' +
@@ -863,8 +931,8 @@
               '</div>' +
             '</div>' +
             '<div class="ex-meta">' +
-              '<span class="meta-tag">📌 ' + curSets + ' x ' + e.reps + '</span>' +
-              '<span class="meta-tag" style="color:#fcd34d;">🔥 ' + e.rir + '</span>' +
+              '<span class="meta-tag">📌 ' + curSets + ' x ' + curReps + '</span>' +
+              '<span class="meta-tag" style="color:' + rirColor + ';">' + (deloadToday ? '🟢 ' : '🔥 ') + curRir + '</span>' +
               '<span class="meta-tag">⏱️ ' + e.rest + '</span>' +
             '</div>' +
             '<div class="ex-note">' + e.note + '</div>' +
@@ -873,24 +941,28 @@
       }).join('');
     }
 
-    // Cálculo automático del volumen semanal total según las series activas (+ / -)
+    document.getElementById('volCardTitle').textContent = state.week === 4
+      ? '📊 Series Semanales (Semana 4: Descarga)'
+      : '📊 Series Semanales Totales (Semanas 1-3)';
+
     var totals = { 'Pecho': 0, 'Espalda': 0, 'Hombro': 0, 'Tríceps': 0, 'Bíceps': 0, 'Pierna': 0, 'Gemelo': 0 };
     daysOrder.forEach(function(dKey) {
       var dItem = data.days[dKey];
       dItem.ex.forEach(function(e, idx) {
-        var sCount = getSetsCount(state.mode, dKey, idx, e.sets);
+        var sCount = getSetsCount(state.mode, dKey, idx, e);
         totals[e.m] = (totals[e.m] || 0) + sCount;
       });
     });
 
     document.getElementById('volGridContainer').innerHTML = Object.keys(totals).map(function(mName) {
-      return '<div class="vol-item"><span>' + mName + '</span><b>' + totals[mName] + ' series</b></div>';
+      return '<div class="vol-item"><span>' + mName + '</span><b style="color:' + (state.week === 4 ? '#6ee7b7' : '#f8fafc') + ';">' + totals[mName] + ' series</b></div>';
     }).join('');
   }
 
   function renderAll() {
     document.getElementById('mode5Btn').classList.toggle('active', state.mode === '5d');
     document.getElementById('mode4Btn').classList.toggle('active', state.mode === '4d');
+    updateWeekButtons();
     renderBench();
     renderRoutine();
   }
